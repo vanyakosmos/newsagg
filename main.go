@@ -19,8 +19,7 @@ var (
 )
 
 func main() {
-	parentCtx := context.Background()
-	ctx, cancel := signal.NotifyContext(parentCtx, os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	b, err := bot.New(botToken)
@@ -31,8 +30,9 @@ func main() {
 	fmt.Printf("BOT: id=%d username=%s\n", user.ID, user.Username)
 
 	for {
-		collectNews(ctx, b)
+		// collectNews(ctx, b)
 		// time.Sleep(time.Second * 5)
+		readHackerNews()
 		return
 	}
 }
