@@ -8,22 +8,24 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
 
 type HackerNewArticle struct {
+	ID             string
 	Title          string
 	ArticleURL     string
-	CommentsURL    string
 	Score          int
+	CommentsURL    string
 	CommentsNumber int
-	Age            string
+	CreatedAt      time.Time
 }
 
 const ROOT_URL = "https://news.ycombinator.com"
 
-func readHackerNews() []HackerNewArticle {
+func ReadHackerNews() []HackerNewArticle {
 	resp, err := http.Get(ROOT_URL)
 	if err != nil {
 		log.Println("error:", err)
@@ -70,6 +72,10 @@ func hasClass(node *html.Node, class string) bool {
 
 func extractCoreArticle(node *html.Node) HackerNewArticle {
 	article := HackerNewArticle{}
+
+	id, _ := getAttr(node, "id")
+	article.ID = id
+
 	for n := range node.Descendants() {
 		if n.Type == html.ElementNode && n.Data == "span" && hasClass(n, "titleline") {
 			anchor := n.FirstChild
@@ -93,7 +99,9 @@ func extractMetaArticle(node *html.Node) HackerNewArticle {
 			article.Score = score
 		} else if n.Data == "span" && hasClass(n, "age") {
 			title, _ := getAttr(n, "title")
-			article.Age = title
+			title = strings.Split(title, " ")[0]
+			age, _ := time.Parse("2006-01-02T15:04:05", title)
+			article.CreatedAt = age
 		} else if n.Data == "a" {
 			href, _ := getAttr(n, "href")
 			text := n.FirstChild.Data
@@ -116,12 +124,13 @@ func mergeArticles(articles []HackerNewArticle) []HackerNewArticle {
 		core := articles[i]
 		meta := articles[i+1]
 		newArticles[i/2] = HackerNewArticle{
+			ID:             core.ID,
 			Title:          core.Title,
 			ArticleURL:     core.ArticleURL,
 			Score:          meta.Score,
 			CommentsURL:    meta.CommentsURL,
 			CommentsNumber: meta.CommentsNumber,
-			Age:            meta.Age,
+			CreatedAt:      meta.CreatedAt,
 		}
 	}
 	return newArticles
