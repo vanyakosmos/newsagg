@@ -1,47 +1,61 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"time"
 )
 
-const (
-	TRACKER_DIR              = ".trackers"
-	CLEANUP_DURATION_SECONDS = 48 * time.Hour
-)
+type Tracker interface {
+	IsTracked(ctx context.Context, articlID string) bool
+	MarkAsTracked(ctx context.Context, articlID string)
+	CleanupOldTrackers(ctx context.Context)
+}
 
-func IsTracked(article HackerNewArticle) bool {
+type FileTracker struct {
+	rootDir      string
+	fileAgeLimit time.Duration
+}
+
+func NewFileTracker() Tracker {
+	return &FileTracker{
+		rootDir:      ".trackers",
+		fileAgeLimit: 1 * time.Minute,
+	}
+}
+
+func (t *FileTracker) IsTracked(ctx context.Context, articleID string) bool {
 	// setup
-	os.Mkdir(TRACKER_DIR, 0755)
-	cleanupOldTrackers()
+	os.Mkdir(t.rootDir, 0755)
+	t.CleanupOldTrackers(ctx)
 	// check
-	filename := getFilename(article.ID)
+	filename := t.getFilename(articleID)
 	_, err := os.Stat(filename)
 	exists := err == nil
 	return exists
 }
 
-func MarkAsTracked(article HackerNewArticle) {
-	filename := getFilename(article.ID)
+func (t *FileTracker) MarkAsTracked(ctx context.Context, articleID string) {
+	filename := t.getFilename(articleID)
 	file, _ := os.Create(filename)
 	file.Close()
 	log.Println("Tracked new article:", filename)
 }
 
-func cleanupOldTrackers() {
-	entries, _ := os.ReadDir(TRACKER_DIR)
+func (t *FileTracker) CleanupOldTrackers(ctx context.Context) {
+	entries, _ := os.ReadDir(t.rootDir)
 	for _, entry := range entries {
 		info, _ := entry.Info()
-		if time.Since(info.ModTime()) > CLEANUP_DURATION_SECONDS {
-			filename := fmt.Sprintf("%s/%s", TRACKER_DIR, entry.Name())
+		if time.Since(info.ModTime()) > t.fileAgeLimit {
+			filename := fmt.Sprintf("%s/%s", t.rootDir, entry.Name())
 			os.Remove(filename)
 			log.Println("Cleaned up old tracker file:", filename)
 		}
 	}
 }
 
-func getFilename(id string) string {
-	return fmt.Sprintf("%s/hn_%s.txt", TRACKER_DIR, id)
+func (t *FileTracker) getFilename(id string) string {
+	return fmt.Sprintf("%s/hn_%s.txt", t.rootDir, id)
 }

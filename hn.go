@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +14,8 @@ import (
 	"golang.org/x/net/html"
 )
 
+const ROOT_URL = "https://news.ycombinator.com"
+
 type HackerNewArticle struct {
 	ID             string
 	Title          string
@@ -23,7 +26,9 @@ type HackerNewArticle struct {
 	CreatedAt      time.Time
 }
 
-const ROOT_URL = "https://news.ycombinator.com"
+func (a HackerNewArticle) String() string {
+	return fmt.Sprintf("[%s] %s", a.ID, a.Title)
+}
 
 func ReadHackerNews() []HackerNewArticle {
 	resp, err := http.Get(ROOT_URL)
@@ -80,8 +85,11 @@ func extractCoreArticle(node *html.Node) HackerNewArticle {
 		if n.Type == html.ElementNode && n.Data == "span" && hasClass(n, "titleline") {
 			anchor := n.FirstChild
 			href, _ := getAttr(n.FirstChild, "href")
-			article.ArticleURL = href
-
+			if strings.HasPrefix(href, "http") {
+				article.ArticleURL = href
+			} else {
+				article.ArticleURL = ROOT_URL + "/" + href
+			}
 			text := anchor.FirstChild
 			article.Title = text.Data
 		}

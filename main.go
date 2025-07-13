@@ -13,10 +13,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var _ = godotenv.Load()
 var (
+	_             = godotenv.Load()
 	botToken      = os.Getenv("BOT_TOKEN")
 	targetChannel = os.Getenv("TARGET_CHANNEL")
+	blobEndpoint  = os.Getenv("BLOB_ENDPOINT")
+	blobAccessKey = os.Getenv("BLOB_ACCESS_KEY")
+	blobSecretKey = os.Getenv("BLOB_SECRET_KEY")
+	blobRegion    = os.Getenv("BLOB_REGION")
 )
 
 func main() {
@@ -28,17 +32,27 @@ func main() {
 	}
 	user, _ := b.GetMe(ctx)
 	log.Printf("BOT: id=%d username=%s\n", user.ID, user.Username)
+	// tracker := NewFileTracker()
+	tracker := NewBlobTracker(ctx, blobEndpoint, blobAccessKey, blobSecretKey, blobRegion, "newsagg")
+
+	go func() {
+		for {
+			tracker.CleanupOldTrackers(ctx)
+			time.Sleep(time.Minute)
+		}
+	}()
 
 	for {
 		articles := ReadHackerNews()
 		for _, a := range articles {
 			if a.Score < 100 {
-				log.Println("Skipping low score article:", a.ID, a.Title)
+				log.Println("Skipping low score article:", a)
 			}
-			if !IsTracked(a) {
-				if sendArticle(ctx, b, a) {
-					MarkAsTracked(a)
-				}
+			if tracker.IsTracked(ctx, a.ID) {
+				log.Println("Skipping tracked article:", a)
+			}
+			if sendArticle(ctx, b, a) {
+				tracker.MarkAsTracked(ctx, a.ID)
 			}
 		}
 		time.Sleep(time.Second * 60)
@@ -55,7 +69,7 @@ func sendArticle(ctx context.Context, b *bot.Bot, article HackerNewArticle) bool
 		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: &disableLinks},
 	})
 	if err != nil {
-		log.Println("bot error:", err)
+		log.Println("Bot error:", err)
 		return false
 	}
 	log.Println("Published article:", article.ID, article.Title)
