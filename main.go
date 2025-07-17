@@ -13,14 +13,23 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func getEnv(key string, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+
 var (
-	_             = godotenv.Load()
-	botToken      = os.Getenv("BOT_TOKEN")
-	targetChannel = os.Getenv("TARGET_CHANNEL")
-	blobEndpoint  = os.Getenv("BLOB_ENDPOINT")
-	blobAccessKey = os.Getenv("BLOB_ACCESS_KEY")
-	blobSecretKey = os.Getenv("BLOB_SECRET_KEY")
-	blobRegion    = os.Getenv("BLOB_REGION")
+	_               = godotenv.Load()
+	botToken        = os.Getenv("BOT_TOKEN")
+	targetChannel   = os.Getenv("TARGET_CHANNEL")
+	bucketEndpoint  = os.Getenv("BUCKET_ENDPOINT")
+	bucketAccessKey = os.Getenv("BUCKET_ACCESS_KEY")
+	bucketSecretKey = os.Getenv("BUCKET_SECRET_KEY")
+	bucketRegion    = os.Getenv("BUCKET_REGION")
+	bucketName      = getEnv("BUCKET_NAME", "newsagg")
 )
 
 func main() {
@@ -33,29 +42,20 @@ func main() {
 	user, _ := b.GetMe(ctx)
 	log.Printf("BOT: id=%d username=%s\n", user.ID, user.Username)
 	// tracker := NewFileTracker()
-	tracker := NewBlobTracker(ctx, blobEndpoint, blobAccessKey, blobSecretKey, blobRegion, "newsagg")
+	tracker := NewBlobTracker(ctx, bucketEndpoint, bucketAccessKey, bucketSecretKey, bucketRegion, bucketName)
 
-	go func() {
-		for {
-			tracker.CleanupOldTrackers(ctx)
-			time.Sleep(time.Minute)
+	tracker.CleanupOldTrackers(ctx)
+	articles := ReadHackerNews()
+	for _, a := range articles {
+		if a.Score < 100 {
+			log.Println("Skipping low score article:", a)
 		}
-	}()
-
-	for {
-		articles := ReadHackerNews()
-		for _, a := range articles {
-			if a.Score < 100 {
-				log.Println("Skipping low score article:", a)
-			}
-			if tracker.IsTracked(ctx, a.ID) {
-				log.Println("Skipping tracked article:", a)
-			}
-			if sendArticle(ctx, b, a) {
-				tracker.MarkAsTracked(ctx, a.ID)
-			}
+		if tracker.IsTracked(ctx, a.ID) {
+			log.Println("Skipping tracked article:", a)
 		}
-		time.Sleep(time.Second * 60)
+		if sendArticle(ctx, b, a) {
+			tracker.MarkAsTracked(ctx, a.ID)
+		}
 	}
 }
 

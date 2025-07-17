@@ -35,8 +35,15 @@ func NewBlobTracker(ctx context.Context, endpoint string, accessKey string, secr
 func mustInitMinioClient(endpoint string, accessKey string, secretKey string, region string) *minio.Client {
 	secure := !strings.HasPrefix(endpoint, "localhost")
 
+	var creds *credentials.Credentials
+	if accessKey == "" && secretKey == "" {
+		creds = credentials.NewIAM(endpoint)
+	} else {
+		creds = credentials.NewStaticV4(accessKey, secretKey, "")
+	}
+
 	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
+		Creds:  creds,
 		Secure: secure,
 		Region: region,
 	})

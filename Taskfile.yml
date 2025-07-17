@@ -1,0 +1,16 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  GCP_PROJECT: newsagg-466216
+  GCP_REGION: europe-central2
+  REGISTRY_HOST: "{{.GCP_REGION}}-docker.pkg.dev"
+  IMAGE_TAG: "{{.REGISTRY_HOST}}/{{.GCP_PROJECT}}/docker/newsagg:latest"
+
+tasks:
+  build:
+    cmds:
+      - docker build . --platform=linux/amd64 -t newsagg:latest -t {{.IMAGE_TAG}}
+      - gcloud auth configure-docker {{.REGISTRY_HOST}}
+      - docker push {{.IMAGE_TAG}}
