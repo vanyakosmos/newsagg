@@ -22,7 +22,7 @@ func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, se
 	err := client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{ForceCreate: false})
 	if err != nil {
 		if !strings.Contains(err.Error(), "request to create the named bucket succeeded") {
-			log.Panicln("Bucket creation error:", err)
+			log.Printf("Bucket %s creation error: %s\n", bucketName, err)
 		}
 	}
 	return &BlobTracker{

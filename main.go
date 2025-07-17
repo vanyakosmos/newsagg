@@ -53,11 +53,9 @@ func main() {
 	for _, a := range articles {
 		if a.Score < 100 {
 			log.Println("Skipping low score article:", a)
-		}
-		if tracker.IsTracked(ctx, a.ID) {
+		} else if tracker.IsTracked(ctx, a.ID) {
 			log.Println("Skipping tracked article:", a)
-		}
-		if sendArticle(ctx, b, a) {
+		} else if sendArticle(ctx, b, a) {
 			tracker.MarkAsTracked(ctx, a.ID)
 		}
 	}
@@ -73,10 +71,15 @@ func sendArticle(ctx context.Context, b *bot.Bot, article HackerNewArticle) bool
 		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: &disableLinks},
 	})
 	if err != nil {
+		if rateErr, ok := err.(*bot.TooManyRequestsError); ok {
+			log.Printf("Too many telegram requests. Retrying after %d seconds\n", rateErr.RetryAfter)
+			time.Sleep(time.Second * time.Duration(rateErr.RetryAfter))
+			return sendArticle(ctx, b, article)
+		}
 		log.Println("Bot error:", err)
 		return false
 	}
-	log.Println("Published article:", article.ID, article.Title)
+	log.Println("Published article:", article)
 	return true
 }
 

@@ -9,6 +9,9 @@ vars:
   IMAGE_TAG: "{{.REGISTRY_HOST}}/{{.GCP_PROJECT}}/docker/newsagg:latest"
 
 tasks:
+  run:
+    cmd: go run .
+
   build:
     cmds:
       - docker build . --platform=linux/amd64 -t newsagg:latest -t {{.IMAGE_TAG}}
