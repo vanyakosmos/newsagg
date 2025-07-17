@@ -27,7 +27,7 @@ func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, se
 	}
 	return &BlobTracker{
 		client:       client,
-		fileAgeLimit: 5 * time.Minute,
+		fileAgeLimit: 7 * 24 * time.Hour,
 		bucketName:   bucketName,
 	}
 }
