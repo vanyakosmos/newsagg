@@ -17,12 +17,12 @@ type BlobTracker struct {
 	bucketName   string
 }
 
-func NewBlobTracker(ctx context.Context, endpoint string, accessKey string, secretKey string, region string, bucketName string) Tracker {
+func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, secretKey string, region string, bucketName string) Tracker {
 	client := mustInitMinioClient(endpoint, accessKey, secretKey, region)
 	err := client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{ForceCreate: false})
 	if err != nil {
 		if !strings.Contains(err.Error(), "request to create the named bucket succeeded") {
-			log.Fatalln("Bucket creation error:", err)
+			log.Panicln("Bucket creation error:", err)
 		}
 	}
 	return &BlobTracker{
@@ -48,7 +48,7 @@ func mustInitMinioClient(endpoint string, accessKey string, secretKey string, re
 		Region: region,
 	})
 	if err != nil {
-		log.Fatalf("Failed to create MinIO client: %v\n", err)
+		log.Panicf("Failed to create MinIO client: %v\n", err)
 	}
 	return client
 }
@@ -61,7 +61,7 @@ func (t *BlobTracker) IsTracked(ctx context.Context, articleID string) bool {
 		if strings.Contains(err.Error(), "does not exist") {
 			return false
 		}
-		log.Fatalln("Getting tracker error:", err)
+		log.Panicln("Getting tracker error:", err)
 	}
 	return true
 }
@@ -74,7 +74,7 @@ func (t *BlobTracker) MarkAsTracked(ctx context.Context, articleID string) {
 		ContentType: "plain/text",
 	})
 	if err != nil {
-		log.Fatalln("Marking tracker error:", err)
+		log.Panicln("Marking tracker error:", err)
 	}
 }
 

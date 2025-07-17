@@ -33,6 +33,10 @@ var (
 )
 
 func main() {
+	sentryInit()
+	defer sentryFlush()
+	defer sentryRecover()
+
 	ctx := context.Background()
 
 	b, err := bot.New(botToken)
@@ -42,7 +46,7 @@ func main() {
 	user, _ := b.GetMe(ctx)
 	log.Printf("BOT: id=%d username=%s\n", user.ID, user.Username)
 	// tracker := NewFileTracker()
-	tracker := NewBlobTracker(ctx, bucketEndpoint, bucketAccessKey, bucketSecretKey, bucketRegion, bucketName)
+	tracker := NewBucketTracker(ctx, bucketEndpoint, bucketAccessKey, bucketSecretKey, bucketRegion, bucketName)
 
 	tracker.CleanupOldTrackers(ctx)
 	articles := ReadHackerNews()
