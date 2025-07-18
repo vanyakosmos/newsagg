@@ -37,8 +37,8 @@ jobs:
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         run: |
-          docker build . --platform=linux/amd64
-            -t newsagg:latest
+          docker build . --platform=linux/amd64 \
+            -t newsagg:latest \
             -t ${{ env.IMAGE_URI }}
 
       - name: Push to Artifact Registry
@@ -73,12 +73,12 @@ jobs:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         # TODO: fix job name
         run: |
-          gcloud run jobs deploy newsagg-test
-            --image=${{ env.IMAGE_URI }}
-            --region=${{ env.GCP_REGION }}
-            --memory=512Mi
-            --max-retries=0
-            --task-timeout=300s
-            --env-vars-file=.env.yaml
-            --parallelism 1
+          gcloud run jobs deploy newsagg-test \
+            --image=${{ env.IMAGE_URI }} \
+            --region=${{ env.GCP_REGION }} \
+            --memory=512Mi \
+            --max-retries=0 \
+            --task-timeout=300s \
+            --env-vars-file=.env.yaml \
+            --parallelism 1 \
             --service-account ${{ env.APP_SA }}
