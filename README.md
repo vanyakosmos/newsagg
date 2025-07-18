@@ -1,5 +1,7 @@
 # newsagg
 
+![build](https://github.com/vanyakosmos/newsagg/actions/workflows/build.yml/badge.svg)
+
 My news aggregator
 
 ## TODO
@@ -12,7 +14,7 @@ My news aggregator
 - [x] задеплоіти на GCP
 - [ ] задеплоіти на GCP використовуючи терраформ (використати terraformer для отримання поточного стану клауда)
 - [ ] зробити окремий сервісний акк який ранить скеджули і клауд функції
-- [ ] setup cicd build
+- [x] setup cicd build
 - [ ] setup cicd deploy
 
 TF migration

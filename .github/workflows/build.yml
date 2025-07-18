@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: build
 
 on:
   push:
@@ -27,11 +27,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.REGISTRY }}
-
-      - name: Build and tag Docker image
+      - name: Build and tag
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         run: |
@@ -39,7 +35,7 @@ jobs:
             -t newsagg:latest \
             -t ${{ env.IMAGE_URI }}
 
-      - name: Push Docker image to Artifact Registry
+      - name: Push to Artifact Registry
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         run: |
