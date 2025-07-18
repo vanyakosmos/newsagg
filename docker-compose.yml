@@ -1,12 +1,19 @@
 services:
   app:
-    build: .
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - minio
 
   minio:
     image: minio/minio:latest
-    container_name: minio
     ports:
-      - "9000:9000"  # client
+      # - "9000:9000"  # client
       - "9001:9001"  # admin
     environment:
       MINIO_ROOT_USER: minio

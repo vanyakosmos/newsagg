@@ -10,7 +10,7 @@ vars:
 
 tasks:
   run:
-    cmd: go run .
+    cmd: docker compose up app
 
   build:
     cmds:

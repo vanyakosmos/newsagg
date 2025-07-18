@@ -9,7 +9,7 @@ COPY . .
 
 # CGO_ENABLED=0 is important for creating statically linked binaries,
 # which are easier to run in minimal base images
-RUN CGO_ENABLED=0 go build -o /app/main .
+RUN CGO_ENABLED=0 go build -o /app-bin .
 
 FROM alpine:3.22
 
@@ -18,5 +18,5 @@ RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
-COPY --from=builder /app/main .
-CMD ["/app/main"]
+COPY --from=builder /app-bin .
+CMD ["/app-bin"]

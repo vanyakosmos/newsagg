@@ -33,7 +33,7 @@ func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, se
 }
 
 func mustInitMinioClient(endpoint string, accessKey string, secretKey string, region string) *minio.Client {
-	secure := !strings.HasPrefix(endpoint, "localhost")
+	secure := !strings.HasPrefix(endpoint, "minio")
 
 	var creds *credentials.Credentials
 	if accessKey == "" && secretKey == "" {
@@ -79,6 +79,7 @@ func (t *bucketTracker) MarkAsTracked(ctx context.Context, articleID string) {
 }
 
 func (t *bucketTracker) CleanupOldTrackers(ctx context.Context) {
+	log.Printf("Attepting cleanup...")
 	opts := minio.ListObjectsOptions{
 		Prefix:    "trackers/",
 		Recursive: false,
@@ -92,7 +93,7 @@ func (t *bucketTracker) CleanupOldTrackers(ctx context.Context) {
 		if time.Since(object.LastModified) > t.fileAgeLimit {
 			err := t.client.RemoveObject(ctx, t.bucketName, object.Key, minio.RemoveObjectOptions{})
 			if err != nil {
-				log.Printf("Failed to remove object %s: %v", object.Key, err)
+				log.Printf("Failed to delete object %s: %v", object.Key, err)
 			} else {
 				log.Printf("Deleted old object: %s", object.Key)
 			}
