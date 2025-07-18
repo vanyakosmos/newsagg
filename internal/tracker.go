@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -8,25 +8,25 @@ import (
 	"time"
 )
 
-type Tracker interface {
+type tracker interface {
 	IsTracked(ctx context.Context, articlID string) bool
 	MarkAsTracked(ctx context.Context, articlID string)
 	CleanupOldTrackers(ctx context.Context)
 }
 
-type FileTracker struct {
+type fileTracker struct {
 	rootDir      string
 	fileAgeLimit time.Duration
 }
 
-func NewFileTracker() Tracker {
-	return &FileTracker{
+func NewFileTracker() tracker {
+	return &fileTracker{
 		rootDir:      ".trackers",
 		fileAgeLimit: 1 * time.Minute,
 	}
 }
 
-func (t *FileTracker) IsTracked(ctx context.Context, articleID string) bool {
+func (t *fileTracker) IsTracked(ctx context.Context, articleID string) bool {
 	// setup
 	os.Mkdir(t.rootDir, 0755)
 	t.CleanupOldTrackers(ctx)
@@ -37,14 +37,14 @@ func (t *FileTracker) IsTracked(ctx context.Context, articleID string) bool {
 	return exists
 }
 
-func (t *FileTracker) MarkAsTracked(ctx context.Context, articleID string) {
+func (t *fileTracker) MarkAsTracked(ctx context.Context, articleID string) {
 	filename := t.getFilename(articleID)
 	file, _ := os.Create(filename)
 	file.Close()
 	log.Println("Tracked new article:", filename)
 }
 
-func (t *FileTracker) CleanupOldTrackers(ctx context.Context) {
+func (t *fileTracker) CleanupOldTrackers(ctx context.Context) {
 	entries, _ := os.ReadDir(t.rootDir)
 	for _, entry := range entries {
 		info, _ := entry.Info()
@@ -56,6 +56,6 @@ func (t *FileTracker) CleanupOldTrackers(ctx context.Context) {
 	}
 }
 
-func (t *FileTracker) getFilename(id string) string {
+func (t *fileTracker) getFilename(id string) string {
 	return fmt.Sprintf("%s/hn_%s.txt", t.rootDir, id)
 }

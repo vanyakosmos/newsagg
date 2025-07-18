@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -11,13 +11,13 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-type BlobTracker struct {
+type bucketTracker struct {
 	client       *minio.Client
 	fileAgeLimit time.Duration
 	bucketName   string
 }
 
-func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, secretKey string, region string, bucketName string) Tracker {
+func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, secretKey string, region string, bucketName string) tracker {
 	client := mustInitMinioClient(endpoint, accessKey, secretKey, region)
 	err := client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{ForceCreate: false})
 	if err != nil {
@@ -25,7 +25,7 @@ func NewBucketTracker(ctx context.Context, endpoint string, accessKey string, se
 			log.Printf("Bucket %s creation error: %s\n", bucketName, err)
 		}
 	}
-	return &BlobTracker{
+	return &bucketTracker{
 		client:       client,
 		fileAgeLimit: 7 * 24 * time.Hour,
 		bucketName:   bucketName,
@@ -53,7 +53,7 @@ func mustInitMinioClient(endpoint string, accessKey string, secretKey string, re
 	return client
 }
 
-func (t *BlobTracker) IsTracked(ctx context.Context, articleID string) bool {
+func (t *bucketTracker) IsTracked(ctx context.Context, articleID string) bool {
 	filename := t.getFilename(articleID)
 
 	_, err := t.client.StatObject(ctx, t.bucketName, filename, minio.StatObjectOptions{})
@@ -66,7 +66,7 @@ func (t *BlobTracker) IsTracked(ctx context.Context, articleID string) bool {
 	return true
 }
 
-func (t *BlobTracker) MarkAsTracked(ctx context.Context, articleID string) {
+func (t *bucketTracker) MarkAsTracked(ctx context.Context, articleID string) {
 	filename := t.getFilename(articleID)
 
 	emptyContent := strings.NewReader("")
@@ -78,7 +78,7 @@ func (t *BlobTracker) MarkAsTracked(ctx context.Context, articleID string) {
 	}
 }
 
-func (t *BlobTracker) CleanupOldTrackers(ctx context.Context) {
+func (t *bucketTracker) CleanupOldTrackers(ctx context.Context) {
 	opts := minio.ListObjectsOptions{
 		Prefix:    "trackers/",
 		Recursive: false,
@@ -86,7 +86,7 @@ func (t *BlobTracker) CleanupOldTrackers(ctx context.Context) {
 
 	for object := range t.client.ListObjects(ctx, t.bucketName, opts) {
 		if object.Err != nil {
-			log.Println("Cleanup error:", object.Err)
+			log.Panicln("Cleanup error:", object.Err)
 			return
 		}
 		if time.Since(object.LastModified) > t.fileAgeLimit {
@@ -100,6 +100,6 @@ func (t *BlobTracker) CleanupOldTrackers(ctx context.Context) {
 	}
 }
 
-func (t *BlobTracker) getFilename(articleID string) string {
+func (t *bucketTracker) getFilename(articleID string) string {
 	return fmt.Sprintf("trackers/hn_%s.txt", articleID)
 }

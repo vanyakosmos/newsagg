@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"errors"
@@ -9,18 +9,18 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-func sentryInit() {
+func SentryInit() {
 	err := sentry.Init(sentry.ClientOptions{})
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
 }
 
-func sentryFlush() {
+func SentryFlush() {
 	sentry.Flush(2 * time.Second)
 }
 
-func sentryRecover() {
+func SentryRecover() {
 	if err := recover(); err != nil {
 		tracedErr := errors.New(fmt.Sprint(err))
 		sentry.CaptureException(tracedErr)

@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 
 const ROOT_URL = "https://news.ycombinator.com"
 
-type HackerNewArticle struct {
+type hackerNewArticle struct {
 	ID             string
 	Title          string
 	ArticleURL     string
@@ -26,11 +26,11 @@ type HackerNewArticle struct {
 	CreatedAt      time.Time
 }
 
-func (a HackerNewArticle) String() string {
+func (a hackerNewArticle) String() string {
 	return fmt.Sprintf("[%s] %s", a.ID, a.Title)
 }
 
-func ReadHackerNews() []HackerNewArticle {
+func ReadHackerNews() []hackerNewArticle {
 	resp, err := http.Get(ROOT_URL)
 	if err != nil {
 		log.Println("error:", err)
@@ -43,7 +43,7 @@ func ReadHackerNews() []HackerNewArticle {
 		log.Println("error:", err)
 		return nil
 	}
-	articles := make([]HackerNewArticle, 0)
+	articles := make([]hackerNewArticle, 0)
 
 	for n := range doc.Descendants() {
 		if n.Type == html.ElementNode && n.Data == "tr" && hasClass(n, "submission") {
@@ -75,8 +75,8 @@ func hasClass(node *html.Node, class string) bool {
 	return slices.Contains(classes, class)
 }
 
-func extractCoreArticle(node *html.Node) HackerNewArticle {
-	article := HackerNewArticle{}
+func extractCoreArticle(node *html.Node) hackerNewArticle {
+	article := hackerNewArticle{}
 
 	id, _ := getAttr(node, "id")
 	article.ID = id
@@ -97,8 +97,8 @@ func extractCoreArticle(node *html.Node) HackerNewArticle {
 	return article
 }
 
-func extractMetaArticle(node *html.Node) HackerNewArticle {
-	article := HackerNewArticle{}
+func extractMetaArticle(node *html.Node) hackerNewArticle {
+	article := hackerNewArticle{}
 	for n := range node.Descendants() {
 		if n.Data == "span" && hasClass(n, "score") {
 			text := n.FirstChild.Data
@@ -126,12 +126,12 @@ func extractMetaArticle(node *html.Node) HackerNewArticle {
 	return article
 }
 
-func mergeArticles(articles []HackerNewArticle) []HackerNewArticle {
-	newArticles := make([]HackerNewArticle, len(articles)/2)
+func mergeArticles(articles []hackerNewArticle) []hackerNewArticle {
+	newArticles := make([]hackerNewArticle, len(articles)/2)
 	for i := 0; i < len(articles); i += 2 {
 		core := articles[i]
 		meta := articles[i+1]
-		newArticles[i/2] = HackerNewArticle{
+		newArticles[i/2] = hackerNewArticle{
 			ID:             core.ID,
 			Title:          core.Title,
 			ArticleURL:     core.ArticleURL,

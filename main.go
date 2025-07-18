@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"newsagg/internal"
 	"os"
-	"strings"
-	"time"
 
 	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 	"github.com/joho/godotenv"
 )
 
@@ -33,9 +30,9 @@ var (
 )
 
 func main() {
-	sentryInit()
-	defer sentryFlush()
-	defer sentryRecover()
+	internal.SentryInit()
+	defer internal.SentryFlush()
+	defer internal.SentryRecover()
 
 	ctx := context.Background()
 
@@ -46,64 +43,17 @@ func main() {
 	user, _ := b.GetMe(ctx)
 	log.Printf("BOT: id=%d username=%s\n", user.ID, user.Username)
 	// tracker := NewFileTracker()
-	tracker := NewBucketTracker(ctx, bucketEndpoint, bucketAccessKey, bucketSecretKey, bucketRegion, bucketName)
+	tracker := internal.NewBucketTracker(ctx, bucketEndpoint, bucketAccessKey, bucketSecretKey, bucketRegion, bucketName)
 
 	tracker.CleanupOldTrackers(ctx)
-	articles := ReadHackerNews()
+	articles := internal.ReadHackerNews()
 	for _, a := range articles {
 		if a.Score < 100 {
 			log.Println("Skipping low score article:", a)
 		} else if tracker.IsTracked(ctx, a.ID) {
 			log.Println("Skipping tracked article:", a)
-		} else if sendArticle(ctx, b, a) {
+		} else if internal.SendArticle(ctx, b, a, targetChannel) {
 			tracker.MarkAsTracked(ctx, a.ID)
 		}
-	}
-}
-
-func sendArticle(ctx context.Context, b *bot.Bot, article HackerNewArticle) bool {
-	disableLinks := false
-	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:             targetChannel,
-		ParseMode:          models.ParseModeMarkdown,
-		Text:               formatMessage(article),
-		ReplyMarkup:        formatKeyboard(article),
-		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: &disableLinks},
-	})
-	if err != nil {
-		if rateErr, ok := err.(*bot.TooManyRequestsError); ok {
-			log.Printf("Too many telegram requests. Retrying after %d seconds\n", rateErr.RetryAfter)
-			time.Sleep(time.Second * time.Duration(rateErr.RetryAfter))
-			return sendArticle(ctx, b, article)
-		}
-		log.Println("Bot error:", err)
-		return false
-	}
-	log.Println("Published article:", article)
-	return true
-}
-
-func formatMessage(article HackerNewArticle) string {
-	duration := time.Since(article.CreatedAt)
-	messageLines := []string{
-		fmt.Sprintf("*%s* \\(Score %d\\+ in %d hours\\)",
-			bot.EscapeMarkdown(article.Title),
-			article.Score,
-			int(duration.Hours())),
-		"",
-		"*Link*: " + bot.EscapeMarkdown(article.ArticleURL),
-		"*Comments*: " + bot.EscapeMarkdown(article.CommentsURL),
-	}
-	return strings.Join(messageLines, "\n")
-}
-
-func formatKeyboard(article HackerNewArticle) *models.InlineKeyboardMarkup {
-	keyboardRow := make([]models.InlineKeyboardButton, 0)
-	keyboardRow = append(keyboardRow, models.InlineKeyboardButton{Text: "Read", URL: article.ArticleURL})
-	if article.CommentsURL != "" {
-		keyboardRow = append(keyboardRow, models.InlineKeyboardButton{Text: fmt.Sprintf("%d+ Comments", article.CommentsNumber), URL: article.CommentsURL})
-	}
-	return &models.InlineKeyboardMarkup{
-		InlineKeyboard: [][]models.InlineKeyboardButton{keyboardRow},
 	}
 }
