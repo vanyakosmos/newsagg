@@ -18,5 +18,5 @@ RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
-COPY --from=builder /app-bin .
+COPY --from=builder /app-bin /
 CMD ["/app-bin"]
