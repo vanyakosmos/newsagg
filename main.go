@@ -42,14 +42,19 @@ func main() {
 	}
 	user, _ := b.GetMe(ctx)
 	log.Printf("BOT: id=%d username=%s\n", user.ID, user.Username)
+
 	// tracker := NewFileTracker()
 	tracker := internal.NewBucketTracker(ctx, bucketEndpoint, bucketAccessKey, bucketSecretKey, bucketRegion, bucketName)
-
 	tracker.CleanupOldTrackers(ctx)
+
 	articles := internal.ReadHackerNews()
+	articles = append(articles, internal.ReadLobsters()...)
+
 	for _, a := range articles {
-		if a.Score < 100 {
-			log.Println("Skipping low score article:", a)
+		if a.Type == "hn" && a.Score < 100 {
+			log.Println("Skipping low score HN article:", a)
+		} else if a.Type == "lobsters" && a.Score < 20 {
+			log.Println("Skipping low score Lobsters article:", a)
 		} else if tracker.IsTracked(ctx, a.ID) {
 			log.Println("Skipping tracked article:", a)
 		} else if internal.SendArticle(ctx, b, a, targetChannel) {

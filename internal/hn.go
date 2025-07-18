@@ -14,9 +14,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-const ROOT_URL = "https://news.ycombinator.com"
+const hackerNewRootURL = "https://news.ycombinator.com"
 
 type hackerNewArticle struct {
+	Type           string
 	ID             string
 	Title          string
 	ArticleURL     string
@@ -27,11 +28,11 @@ type hackerNewArticle struct {
 }
 
 func (a hackerNewArticle) String() string {
-	return fmt.Sprintf("[%s] %s", a.ID, a.Title)
+	return fmt.Sprintf("[%s/%s] 𝚫%d ~ %s", a.Type, a.ID, a.Score, a.Title)
 }
 
 func ReadHackerNews() []hackerNewArticle {
-	resp, err := http.Get(ROOT_URL)
+	resp, err := http.Get(hackerNewRootURL)
 	if err != nil {
 		log.Println("error:", err)
 		return nil
@@ -76,7 +77,7 @@ func hasClass(node *html.Node, class string) bool {
 }
 
 func extractCoreArticle(node *html.Node) hackerNewArticle {
-	article := hackerNewArticle{}
+	article := hackerNewArticle{Type: "hn"}
 
 	id, _ := getAttr(node, "id")
 	article.ID = id
@@ -88,7 +89,7 @@ func extractCoreArticle(node *html.Node) hackerNewArticle {
 			if strings.HasPrefix(href, "http") {
 				article.ArticleURL = href
 			} else {
-				article.ArticleURL = ROOT_URL + "/" + href
+				article.ArticleURL = hackerNewRootURL + "/" + href
 			}
 			text := anchor.FirstChild
 			article.Title = text.Data
@@ -98,7 +99,7 @@ func extractCoreArticle(node *html.Node) hackerNewArticle {
 }
 
 func extractMetaArticle(node *html.Node) hackerNewArticle {
-	article := hackerNewArticle{}
+	article := hackerNewArticle{Type: "hn"}
 	for n := range node.Descendants() {
 		if n.Data == "span" && hasClass(n, "score") {
 			text := n.FirstChild.Data
@@ -117,7 +118,7 @@ func extractMetaArticle(node *html.Node) hackerNewArticle {
 			if !strings.HasPrefix(href, "item?id=") || !strings.HasSuffix(text, "comments") {
 				continue
 			}
-			article.CommentsURL = ROOT_URL + "/" + href
+			article.CommentsURL = hackerNewRootURL + "/" + href
 			commentsMatches := regexp.MustCompile(`(\d+)[\s ]comments`).FindStringSubmatch(text)
 			comments, _ := strconv.Atoi(commentsMatches[1])
 			article.CommentsNumber = comments
@@ -132,6 +133,7 @@ func mergeArticles(articles []hackerNewArticle) []hackerNewArticle {
 		core := articles[i]
 		meta := articles[i+1]
 		newArticles[i/2] = hackerNewArticle{
+			Type:           "hn",
 			ID:             core.ID,
 			Title:          core.Title,
 			ArticleURL:     core.ArticleURL,
