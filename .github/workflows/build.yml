@@ -8,15 +8,17 @@ on:
 env:
   GCP_PROJECT: newsagg-466216
   GCP_REGION: europe-central2
-  REGISTRY: ${{ env.GCP_REGION }}-docker.pkg.dev
   IMAGE_NAME: newsagg
   IMAGE_TAG: latest
-  IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
 jobs:
   build:
-    name: Build Docker image adn push to Artifact Registry
+    name: Build Docker Image and push to Artifact Registry
     runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ${{ env.GCP_REGION }}-docker.pkg.dev
+      IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
     steps:
       - name: Checkout code
