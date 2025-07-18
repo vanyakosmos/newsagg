@@ -10,7 +10,7 @@ env:
   GCP_REGION: europe-central2
   REGISTRY: europe-central2-docker.pkg.dev
   # TODO: fix job name
-  CLOUD_RUN_JOB: newsagg-test
+  CLOUD_RUN_JOB: newsagg
 
 jobs:
   build:
