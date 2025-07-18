@@ -1,12 +1,10 @@
 package internal
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,23 +13,9 @@ import (
 )
 
 const hackerNewRootURL = "https://news.ycombinator.com"
+const HackerNewsSource = "hn"
 
-type hackerNewArticle struct {
-	Type           string
-	ID             string
-	Title          string
-	ArticleURL     string
-	Score          int
-	CommentsURL    string
-	CommentsNumber int
-	CreatedAt      time.Time
-}
-
-func (a hackerNewArticle) String() string {
-	return fmt.Sprintf("[%s/%s] 𝚫%d ~ %s", a.Type, a.ID, a.Score, a.Title)
-}
-
-func ReadHackerNews() []hackerNewArticle {
+func ReadHackerNews() []newsArticle {
 	resp, err := http.Get(hackerNewRootURL)
 	if err != nil {
 		log.Println("error:", err)
@@ -44,7 +28,7 @@ func ReadHackerNews() []hackerNewArticle {
 		log.Println("error:", err)
 		return nil
 	}
-	articles := make([]hackerNewArticle, 0)
+	articles := make([]newsArticle, 0)
 
 	for n := range doc.Descendants() {
 		if n.Type == html.ElementNode && n.Data == "tr" && hasClass(n, "submission") {
@@ -58,26 +42,8 @@ func ReadHackerNews() []hackerNewArticle {
 	return mergeArticles(articles)
 }
 
-func getAttr(node *html.Node, key string) (string, bool) {
-	for _, attr := range node.Attr {
-		if attr.Key == key {
-			return attr.Val, true
-		}
-	}
-	return "", false
-}
-
-func hasClass(node *html.Node, class string) bool {
-	classesStr, found := getAttr(node, "class")
-	if !found {
-		return false
-	}
-	classes := strings.Split(classesStr, " ")
-	return slices.Contains(classes, class)
-}
-
-func extractCoreArticle(node *html.Node) hackerNewArticle {
-	article := hackerNewArticle{Type: "hn"}
+func extractCoreArticle(node *html.Node) newsArticle {
+	article := newsArticle{Source: HackerNewsSource}
 
 	id, _ := getAttr(node, "id")
 	article.ID = id
@@ -98,8 +64,8 @@ func extractCoreArticle(node *html.Node) hackerNewArticle {
 	return article
 }
 
-func extractMetaArticle(node *html.Node) hackerNewArticle {
-	article := hackerNewArticle{Type: "hn"}
+func extractMetaArticle(node *html.Node) newsArticle {
+	article := newsArticle{Source: HackerNewsSource}
 	for n := range node.Descendants() {
 		if n.Data == "span" && hasClass(n, "score") {
 			text := n.FirstChild.Data
@@ -127,13 +93,13 @@ func extractMetaArticle(node *html.Node) hackerNewArticle {
 	return article
 }
 
-func mergeArticles(articles []hackerNewArticle) []hackerNewArticle {
-	newArticles := make([]hackerNewArticle, len(articles)/2)
+func mergeArticles(articles []newsArticle) []newsArticle {
+	newArticles := make([]newsArticle, len(articles)/2)
 	for i := 0; i < len(articles); i += 2 {
 		core := articles[i]
 		meta := articles[i+1]
-		newArticles[i/2] = hackerNewArticle{
-			Type:           "hn",
+		newArticles[i/2] = newsArticle{
+			Source:         HackerNewsSource,
 			ID:             core.ID,
 			Title:          core.Title,
 			ArticleURL:     core.ArticleURL,

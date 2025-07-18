@@ -53,8 +53,8 @@ func mustInitMinioClient(endpoint string, accessKey string, secretKey string, re
 	return client
 }
 
-func (t *bucketTracker) IsTracked(ctx context.Context, articleID string) bool {
-	filename := t.getFilename(articleID)
+func (t *bucketTracker) IsTracked(ctx context.Context, article newsArticle) bool {
+	filename := t.getFilename(article)
 
 	_, err := t.client.StatObject(ctx, t.bucketName, filename, minio.StatObjectOptions{})
 	if err != nil {
@@ -66,8 +66,8 @@ func (t *bucketTracker) IsTracked(ctx context.Context, articleID string) bool {
 	return true
 }
 
-func (t *bucketTracker) MarkAsTracked(ctx context.Context, articleID string) {
-	filename := t.getFilename(articleID)
+func (t *bucketTracker) MarkAsTracked(ctx context.Context, article newsArticle) {
+	filename := t.getFilename(article)
 
 	emptyContent := strings.NewReader("")
 	_, err := t.client.PutObject(ctx, t.bucketName, filename, emptyContent, 0, minio.PutObjectOptions{
@@ -101,6 +101,6 @@ func (t *bucketTracker) CleanupOldTrackers(ctx context.Context) {
 	}
 }
 
-func (t *bucketTracker) getFilename(articleID string) string {
-	return fmt.Sprintf("trackers/hn_%s.txt", articleID)
+func (t *bucketTracker) getFilename(article newsArticle) string {
+	return fmt.Sprintf("trackers/%s_%s.txt", article.Source, article.ID)
 }

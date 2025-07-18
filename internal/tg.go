@@ -11,7 +11,7 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func SendArticle(ctx context.Context, b *bot.Bot, article hackerNewArticle, targetChannel string) bool {
+func SendArticle(ctx context.Context, b *bot.Bot, article newsArticle, targetChannel string) bool {
 	disableLinks := false
 	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:             targetChannel,
@@ -33,7 +33,7 @@ func SendArticle(ctx context.Context, b *bot.Bot, article hackerNewArticle, targ
 	return true
 }
 
-func formatMessage(article hackerNewArticle) string {
+func formatMessage(article newsArticle) string {
 	duration := time.Since(article.CreatedAt)
 	messageLines := []string{
 		fmt.Sprintf("*%s* \\(Score %d\\+ in %d hours\\)",
@@ -47,7 +47,7 @@ func formatMessage(article hackerNewArticle) string {
 	return strings.Join(messageLines, "\n")
 }
 
-func formatKeyboard(article hackerNewArticle) *models.InlineKeyboardMarkup {
+func formatKeyboard(article newsArticle) *models.InlineKeyboardMarkup {
 	keyboardRow := make([]models.InlineKeyboardButton, 0)
 	keyboardRow = append(keyboardRow, models.InlineKeyboardButton{Text: "Read", URL: article.ArticleURL})
 	if article.CommentsURL != "" {

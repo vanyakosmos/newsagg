@@ -51,14 +51,14 @@ func main() {
 	articles = append(articles, internal.ReadLobsters()...)
 
 	for _, a := range articles {
-		if a.Type == "hn" && a.Score < 100 {
+		if a.Source == internal.HackerNewsSource && a.Score < 100 {
 			log.Println("Skipping low score HN article:", a)
-		} else if a.Type == "lobsters" && a.Score < 20 {
+		} else if a.Source == internal.LobstersSource && a.Score < 20 {
 			log.Println("Skipping low score Lobsters article:", a)
-		} else if tracker.IsTracked(ctx, a.ID) {
+		} else if tracker.IsTracked(ctx, a) {
 			log.Println("Skipping tracked article:", a)
 		} else if internal.SendArticle(ctx, b, a, targetChannel) {
-			tracker.MarkAsTracked(ctx, a.ID)
+			tracker.MarkAsTracked(ctx, a)
 		}
 	}
 }

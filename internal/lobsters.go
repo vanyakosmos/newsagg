@@ -12,8 +12,9 @@ import (
 )
 
 const lobsterRootUrl = "https://lobste.rs"
+const LobstersSource = "lobsters"
 
-func ReadLobsters() []hackerNewArticle {
+func ReadLobsters() []newsArticle {
 	resp, err := http.Get(lobsterRootUrl)
 	if err != nil {
 		log.Println("error:", err)
@@ -28,7 +29,7 @@ func ReadLobsters() []hackerNewArticle {
 		return nil
 	}
 
-	articles := make([]hackerNewArticle, 0)
+	articles := make([]newsArticle, 0)
 
 	for n := range doc.Descendants() {
 		if n.Type == html.ElementNode && n.Data == "div" && hasClass(n, "story_liner") {
@@ -39,8 +40,8 @@ func ReadLobsters() []hackerNewArticle {
 	return articles
 }
 
-func extractArticle(node *html.Node) hackerNewArticle {
-	article := hackerNewArticle{Type: "lobsters"}
+func extractArticle(node *html.Node) newsArticle {
+	article := newsArticle{Source: LobstersSource}
 	for n := range node.Descendants() {
 		if n.Data == "a" && hasClass(n, "u-url") {
 			href, _ := getAttr(n, "href")
@@ -71,13 +72,4 @@ func extractArticle(node *html.Node) hackerNewArticle {
 		}
 	}
 	return article
-}
-
-func findChild(node *html.Node, tag string) *html.Node {
-	for n := range node.Descendants() {
-		if n.Data == tag {
-			return n
-		}
-	}
-	return nil
 }

@@ -9,8 +9,8 @@ import (
 )
 
 type tracker interface {
-	IsTracked(ctx context.Context, articlID string) bool
-	MarkAsTracked(ctx context.Context, articlID string)
+	IsTracked(ctx context.Context, article newsArticle) bool
+	MarkAsTracked(ctx context.Context, article newsArticle)
 	CleanupOldTrackers(ctx context.Context)
 }
 
@@ -26,19 +26,19 @@ func NewFileTracker() tracker {
 	}
 }
 
-func (t *fileTracker) IsTracked(ctx context.Context, articleID string) bool {
+func (t *fileTracker) IsTracked(ctx context.Context, article newsArticle) bool {
 	// setup
 	os.Mkdir(t.rootDir, 0755)
 	t.CleanupOldTrackers(ctx)
 	// check
-	filename := t.getFilename(articleID)
+	filename := t.getFilename(article)
 	_, err := os.Stat(filename)
 	exists := err == nil
 	return exists
 }
 
-func (t *fileTracker) MarkAsTracked(ctx context.Context, articleID string) {
-	filename := t.getFilename(articleID)
+func (t *fileTracker) MarkAsTracked(ctx context.Context, article newsArticle) {
+	filename := t.getFilename(article)
 	file, _ := os.Create(filename)
 	file.Close()
 	log.Println("Tracked new article:", filename)
@@ -56,6 +56,6 @@ func (t *fileTracker) CleanupOldTrackers(ctx context.Context) {
 	}
 }
 
-func (t *fileTracker) getFilename(id string) string {
-	return fmt.Sprintf("%s/hn_%s.txt", t.rootDir, id)
+func (t *fileTracker) getFilename(a newsArticle) string {
+	return fmt.Sprintf("%s/%s_%s.txt", t.rootDir, a.Source, a.ID)
 }
