@@ -62,7 +62,7 @@ func main() {
 }
 
 func sendArticle(ctx context.Context, b *bot.Bot, article HackerNewArticle) bool {
-	disableLinks := true
+	disableLinks := false
 	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:             targetChannel,
 		ParseMode:          models.ParseModeMarkdown,
