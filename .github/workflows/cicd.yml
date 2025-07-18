@@ -88,9 +88,12 @@ jobs:
       
       - name: "Deploy cloud scheduler"
         run: |
-          gcloud scheduler jobs delete ${{ env.CLOUD_RUN_JOB }}-scheduler || echo "scheduler haven't existed"
+          gcloud scheduler jobs delete ${{ env.CLOUD_RUN_JOB }}-scheduler \
+            --location ${{ env.GCP_REGION }} \
+            --quiet \
+            || echo "scheduler haven't existed"
           gcloud scheduler jobs create http ${{ env.CLOUD_RUN_JOB }}-scheduler \
-            --schedule "0 * * * *" \
+            --schedule "*/30 * * * *" \
             --uri https://${{ env.GCP_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.GCP_PROJECT }}/jobs/${{ env.CLOUD_RUN_JOB }}:run \
             --http-method POST \
             --oauth-service-account-email functions-scheduler@newsagg-466216.iam.gserviceaccount.com \
