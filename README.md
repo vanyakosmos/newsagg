@@ -4,6 +4,21 @@
 
 My news aggregator
 
+## Project Architecture
+
+```mermaid
+graph TD
+    sch[Cloud Scheduler]
+    job["`Cloud Run Job
+    (inside docker container)`"]
+
+    sch -->|runs| job
+    job -->|containes| app{Go App}
+    app -->|stores tracking data| bucket[(GCS Bucket)]
+    app -->|uses bot api| tg((Telegram API))
+    app -->|fetch data| hn((HackerNews))
+    app -->|fetch data| lo((Lobsters))
+```
 
 ## Deployemnt
 
