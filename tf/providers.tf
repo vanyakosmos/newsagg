@@ -10,6 +10,9 @@ terraform {
     }
   }
   required_version = ">= 1.12.2"
+  backend "gcs" {
+    bucket = "newsagg-tf-state"
+  }
 }
 
 provider "google" {
@@ -20,21 +23,4 @@ provider "google" {
 provider "github" {
   owner = var.github_owner
   token = var.github_token
-}
-
-resource "google_artifact_registry_repository" "docker" {
-  location      = var.gcp_region
-  repository_id = "docker"
-  format        = "DOCKER"
-  vulnerability_scanning_config {
-    enablement_config = "DISABLED"
-  }
-  cleanup_policy_dry_run = false
-  cleanup_policies {
-    id     = "keep-5-versions"
-    action = "KEEP"
-    most_recent_versions {
-      keep_count = 10
-    }
-  }
 }
