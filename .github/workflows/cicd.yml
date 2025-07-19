@@ -6,11 +6,9 @@ on:
       - master
 
 env:
-  GCP_PROJECT: newsagg-466216
-  GCP_REGION: europe-central2
-  REGISTRY: europe-central2-docker.pkg.dev
-  # TODO: fix job name
   CLOUD_RUN_JOB: newsagg
+  SENTRY_DSN: ""  # TODO: restore after creating new org
+  TARGET_CHANNEL: "@newnewsagg"
 
 jobs:
   build:
@@ -29,21 +27,17 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+          gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY }} --quiet
 
       - name: Build and tag
-        env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/newsagg:${{ github.sha }}
         run: |
           docker build . --platform=linux/amd64 \
             -t newsagg:latest \
-            -t ${{ env.IMAGE_URI }}
+            -t "${{ vars.IMAGE_NAME }}:${{ github.sha }}"
 
       - name: Push to Artifact Registry
-        env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/newsagg:${{ github.sha }}
         run: |
-          docker push ${{ env.IMAGE_URI }}
+          docker push "${{ vars.IMAGE_NAME }}:${{ github.sha }}"
 
   deploy:
     name: Deploy
@@ -61,7 +55,7 @@ jobs:
         run: |
           cat <<EOF > .env.yaml
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          TARGET_CHANNEL: "@newnewsagg"
+          TARGET_CHANNEL: "${{ env.TARGET_CHANNEL }}"
 
           BUCKET_ENDPOINT: storage.googleapis.com
           BUCKET_ACCESS_KEY: ${{ secrets.BUCKET_ACCESS_KEY }}
@@ -69,33 +63,31 @@ jobs:
           BUCKET_REGION: auto
           BUCKET_NAME: newsagg
 
-          SENTRY_DSN: https://0a94989342892f02c23e3a6a3dc86939@o219112.ingest.us.sentry.io/4509685511225345
+          SENTRY_DSN: "${{ env.SENTRY_DSN }}"
           EOF
 
       - name: "Deploy cloud run job"
-        env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT }}/docker/newsagg:${{ github.sha }}
         run: |
           gcloud run jobs deploy ${{ env.CLOUD_RUN_JOB }} \
-            --image=${{ env.IMAGE_URI }} \
-            --region=${{ env.GCP_REGION }} \
+            --image="${{ vars.IMAGE_NAME }}:${{ github.sha }}" \
+            --region=${{ vars.GCP_REGION }} \
             --memory=512Mi \
             --max-retries=0 \
             --task-timeout=300s \
             --env-vars-file=.env.yaml \
             --parallelism 1 \
-            --service-account newsagg@newsagg-466216.iam.gserviceaccount.com
+            --service-account ${{ vars.APP_SA }}
       
       - name: "Deploy cloud scheduler"
         run: |
           gcloud scheduler jobs delete ${{ env.CLOUD_RUN_JOB }}-scheduler \
-            --location ${{ env.GCP_REGION }} \
+            --location ${{ vars.GCP_REGION }} \
             --quiet \
             || echo "scheduler haven't existed"
           gcloud scheduler jobs create http ${{ env.CLOUD_RUN_JOB }}-scheduler \
             --schedule "*/30 * * * *" \
-            --uri https://${{ env.GCP_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.GCP_PROJECT }}/jobs/${{ env.CLOUD_RUN_JOB }}:run \
+            --uri https://${{ vars.GCP_REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ vars.GCP_PROJECT }}/jobs/${{ env.CLOUD_RUN_JOB }}:run \
             --http-method POST \
-            --oauth-service-account-email functions-scheduler@newsagg-466216.iam.gserviceaccount.com \
-            --location ${{ env.GCP_REGION }} \
-            --project ${{ env.GCP_PROJECT }}
+            --oauth-service-account-email ${{ vars.CLOUDSCHEDULER_SA }} \
+            --location ${{ vars.GCP_REGION }} \
+            --project ${{ vars.GCP_PROJECT }}
