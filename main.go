@@ -10,23 +10,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func getEnv(key string, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
-	}
-	return value
-}
-
 var (
-	_               = godotenv.Load()
-	botToken        = os.Getenv("BOT_TOKEN")
-	targetChannel   = os.Getenv("TARGET_CHANNEL")
-	bucketEndpoint  = os.Getenv("BUCKET_ENDPOINT")
-	bucketAccessKey = os.Getenv("BUCKET_ACCESS_KEY")
-	bucketSecretKey = os.Getenv("BUCKET_SECRET_KEY")
-	bucketRegion    = os.Getenv("BUCKET_REGION")
-	bucketName      = getEnv("BUCKET_NAME", "newsagg")
+	_                = godotenv.Load()
+	telegramBotToken = os.Getenv("TELEGRAM_BOT_TOKEN")
+	targetChannel    = os.Getenv("TARGET_CHANNEL")
+	bucketEndpoint   = os.Getenv("BUCKET_ENDPOINT")
+	bucketAccessKey  = os.Getenv("BUCKET_ACCESS_KEY")
+	bucketSecretKey  = os.Getenv("BUCKET_SECRET_KEY")
+	bucketRegion     = os.Getenv("BUCKET_REGION")
+	bucketName       = os.Getenv("BUCKET_NAME")
 )
 
 func main() {
@@ -36,7 +28,7 @@ func main() {
 
 	ctx := context.Background()
 
-	b, err := bot.New(botToken)
+	b, err := bot.New(telegramBotToken)
 	if err != nil {
 		panic(err)
 	}

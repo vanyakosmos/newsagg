@@ -54,16 +54,15 @@ jobs:
       - name: Generate .env.yaml
         run: |
           cat <<EOF > .env.yaml
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TARGET_CHANNEL: "${{ env.TARGET_CHANNEL }}"
+          SENTRY_DSN: "${{ env.SENTRY_DSN }}"
 
           BUCKET_ENDPOINT: storage.googleapis.com
           BUCKET_ACCESS_KEY: ${{ secrets.BUCKET_ACCESS_KEY }}
           BUCKET_SECRET_KEY: ${{ secrets.BUCKET_SECRET_KEY }}
           BUCKET_REGION: auto
           BUCKET_NAME: ${{ vars.BUCKET_NAME }}
-
-          SENTRY_DSN: "${{ env.SENTRY_DSN }}"
           EOF
 
       - name: "Deploy cloud run job"

@@ -11,6 +11,7 @@ Manual:
 - GCP project creation
 - github token
 - sentry project and dsn
+- telegram channel and bot setup
 
 Via terraform:
 - artifacts registry
