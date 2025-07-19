@@ -25,6 +25,12 @@ resource "github_actions_variable" "image_name" {
   value         = "${github_actions_variable.docker_registry.value}/${var.gcp_project}/docker/newsagg"
 }
 
+resource "github_actions_variable" "bucket_name" {
+  repository    = var.github_repo
+  variable_name = "bucket_name"
+  value         = google_storage_bucket.newsagg.name
+}
+
 # SERVICE ACCOUNTS
 
 resource "github_actions_variable" "app_sa" {

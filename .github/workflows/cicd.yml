@@ -61,7 +61,7 @@ jobs:
           BUCKET_ACCESS_KEY: ${{ secrets.BUCKET_ACCESS_KEY }}
           BUCKET_SECRET_KEY: ${{ secrets.BUCKET_SECRET_KEY }}
           BUCKET_REGION: auto
-          BUCKET_NAME: newsagg
+          BUCKET_NAME: ${{ vars.BUCKET_NAME }}
 
           SENTRY_DSN: "${{ env.SENTRY_DSN }}"
           EOF
