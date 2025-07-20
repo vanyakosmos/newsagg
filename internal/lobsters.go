@@ -1,8 +1,7 @@
 package internal
 
 import (
-	"log"
-	"net/http"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,29 +14,31 @@ const lobsterRootUrl = "https://lobste.rs"
 const LobstersSource = "lobsters"
 
 func ReadLobsters() []newsArticle {
-	resp, err := http.Get(lobsterRootUrl)
-	if err != nil {
-		log.Println("error:", err)
-		return nil
-	}
-	defer resp.Body.Close()
-	log.Printf("Gor response from %s: %d\n", lobsterRootUrl, resp.StatusCode)
-
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		log.Println("error:", err)
-		return nil
-	}
-
 	articles := make([]newsArticle, 0)
-
-	for n := range doc.Descendants() {
-		if n.Type == html.ElementNode && n.Data == "div" && hasClass(n, "story_liner") {
-			article := extractArticle(n)
-			articles = append(articles, article)
+	for page := range lobsetersPages() {
+		for n := range page.Descendants() {
+			if n.Type == html.ElementNode && n.Data == "div" && hasClass(n, "story_liner") {
+				article := extractArticle(n)
+				articles = append(articles, article)
+			}
 		}
 	}
 	return articles
+}
+
+func lobsetersPages() chan *html.Node {
+	pages := make(chan *html.Node)
+	go func() {
+		for i := range 5 {
+			query := fmt.Sprintf("%s?page=%d", lobsterRootUrl, i+1)
+			doc := loadPage(query)
+			if doc != nil {
+				pages <- doc
+			}
+		}
+		close(pages)
+	}()
+	return pages
 }
 
 func extractArticle(node *html.Node) newsArticle {

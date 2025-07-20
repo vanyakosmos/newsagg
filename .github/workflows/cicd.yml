@@ -33,6 +33,10 @@ jobs:
           docker build . --platform=linux/amd64 \
             -t newsagg:latest \
             -t "${{ vars.IMAGE_NAME }}:${{ github.sha }}"
+      
+      - name: Test
+        run: |
+          docker run --rm newsagg:latest go test ./...
 
       - name: Push to Artifact Registry
         run: |

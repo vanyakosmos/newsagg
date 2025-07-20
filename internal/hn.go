@@ -1,8 +1,7 @@
 package internal
 
 import (
-	"log"
-	"net/http"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -16,30 +15,35 @@ const hackerNewRootURL = "https://news.ycombinator.com"
 const HackerNewsSource = "hn"
 
 func ReadHackerNews() []newsArticle {
-	resp, err := http.Get(hackerNewRootURL)
-	if err != nil {
-		log.Println("error:", err)
-		return nil
-	}
-	defer resp.Body.Close()
-
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		log.Println("error:", err)
-		return nil
-	}
 	articles := make([]newsArticle, 0)
 
-	for n := range doc.Descendants() {
-		if n.Type == html.ElementNode && n.Data == "tr" && hasClass(n, "submission") {
-			article := extractCoreArticle(n)
-			articles = append(articles, article)
-		} else if n.Type == html.ElementNode && n.Data == "td" && hasClass(n, "subtext") {
-			article := extractMetaArticle(n)
-			articles = append(articles, article)
+	for page := range loadHackerNewsPages() {
+		for n := range page.Descendants() {
+			if n.Type == html.ElementNode && n.Data == "tr" && hasClass(n, "submission") {
+				article := extractCoreArticle(n)
+				articles = append(articles, article)
+			} else if n.Type == html.ElementNode && n.Data == "td" && hasClass(n, "subtext") {
+				article := extractMetaArticle(n)
+				articles = append(articles, article)
+			}
 		}
 	}
 	return mergeArticles(articles)
+}
+
+func loadHackerNewsPages() <-chan *html.Node {
+	pages := make(chan *html.Node)
+	go func() {
+		for i := range 5 {
+			query := fmt.Sprintf("%s?p=%d", hackerNewRootURL, i+1)
+			doc := loadPage(query)
+			if doc != nil {
+				pages <- doc
+			}
+		}
+		close(pages)
+	}()
+	return pages
 }
 
 func extractCoreArticle(node *html.Node) newsArticle {

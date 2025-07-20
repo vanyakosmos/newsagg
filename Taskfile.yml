@@ -17,3 +17,7 @@ tasks:
       - docker build . --platform=linux/amd64 -t newsagg:latest -t {{.IMAGE_TAG}}
       - gcloud auth configure-docker {{.REGISTRY_HOST}}
       - docker push {{.IMAGE_TAG}}
+
+  test:
+    cmds:
+      - go test ./...
