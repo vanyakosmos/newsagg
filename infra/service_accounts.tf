@@ -4,6 +4,11 @@ resource "google_service_account" "github" {
   description  = "Github CI/CD"
   project      = var.gcp_project
 }
+resource "google_storage_bucket_iam_member" "gitlab" {
+  member = "serviceAccount:${google_service_account.github.email}"
+  bucket = "newsagg-tf-state"
+  role   = "roles/storage.objectAdmin"
+}
 resource "google_project_iam_member" "github_artifactregistry_writer" {
   member  = "serviceAccount:${google_service_account.github.email}"
   project = var.gcp_project
