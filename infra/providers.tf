@@ -12,6 +12,7 @@ terraform {
   required_version = ">= 1.12.2"
   backend "gcs" {
     bucket = "newsagg-tf-state"
+    prefix = "infra"
   }
 }
 

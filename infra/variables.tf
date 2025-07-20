@@ -1,3 +1,7 @@
+locals {
+  image_name = "${github_actions_variable.docker_registry.value}/${var.gcp_project}/docker/newsagg"
+}
+
 variable "gcp_project" {
   type    = string
   default = "newsagg-466216"
