@@ -10,6 +10,18 @@ env:
   TARGET_CHANNEL: "@newnewsagg"
 
 jobs:
+  test:
+    name: Test on dev image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build dev image
+        run: |
+          docker build -f Dockerfile.dev --platform=linux/amd64 -t newsagg:dev .
+      - name: Test
+        run: |
+          docker run --rm newsagg:dev go test ./...
+
   build:
     name: Build docker image and push to Artifact Registry
     runs-on: ubuntu-latest
@@ -17,6 +29,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Build and tag
+        run: |
+          docker build . --platform=linux/amd64 \
+            -t newsagg:latest \
+            -t "${{ vars.IMAGE_NAME }}:${{ github.sha }}"
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -27,16 +45,6 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY }} --quiet
-
-      - name: Build and tag
-        run: |
-          docker build . --platform=linux/amd64 \
-            -t newsagg:latest \
-            -t "${{ vars.IMAGE_NAME }}:${{ github.sha }}"
-      
-      - name: Test
-        run: |
-          docker run --rm newsagg:latest go test ./...
 
       - name: Push to Artifact Registry
         run: |
