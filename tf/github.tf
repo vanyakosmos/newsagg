@@ -70,3 +70,9 @@ resource "github_actions_secret" "bucket_secret_key" {
   secret_name     = "bucket_secret_key"
   plaintext_value = google_storage_hmac_key.newsagg.secret
 }
+
+resource "github_actions_secret" "sentry_dsn" {
+  repository      = var.github_repo
+  secret_name     = "sentry_dsn"
+  plaintext_value = var.sentry_dsn
+}

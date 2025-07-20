@@ -12,7 +12,8 @@ variable "github_owner" {
   default = "vanyakosmos"
 }
 variable "github_token" {
-  type = string
+  type      = string
+  sensitive = true
 }
 variable "github_repo" {
   type    = string
@@ -20,5 +21,11 @@ variable "github_repo" {
 }
 
 variable "telegram_bot_token" {
-  type = string
+  type      = string
+  sensitive = true
+}
+
+variable "sentry_dsn" {
+  type      = string
+  sensitive = true
 }
