@@ -4,7 +4,7 @@ resource "google_service_account" "github" {
   description  = "Github CI/CD"
   project      = var.gcp_project
 }
-resource "google_storage_bucket_iam_member" "gitlab" {
+resource "google_storage_bucket_iam_member" "github_tf_state_admin" {
   member = "serviceAccount:${google_service_account.github.email}"
   bucket = "newsagg-tf-state"
   role   = "roles/storage.objectAdmin"
@@ -56,8 +56,8 @@ resource "google_service_account" "application" {
   description  = "Used inside the app to access stuff"
   project      = var.gcp_project
 }
-resource "google_project_iam_member" "application_storage_object_admin" {
-  member  = "serviceAccount:${google_service_account.application.email}"
-  project = var.gcp_project
-  role    = "roles/storage.objectAdmin"
+resource "google_storage_bucket_iam_member" "application_newsagg_admin" {
+  member = "serviceAccount:${google_service_account.application.email}"
+  bucket = google_storage_bucket.newsagg.name
+  role   = "roles/storage.objectAdmin"
 }

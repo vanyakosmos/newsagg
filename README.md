@@ -28,12 +28,16 @@ Manual:
 - sentry project and dsn
 - telegram channel and bot setup
 
-Via terraform:
+Infra via terraform:
 - artifacts registry
 - storage bucket
 - service accounts and bindings
 - github secrets and vars
 
-Via cd/cd:
+Deployment via terraform:
 - cloud run job
 - cloud schedule job
+
+CI:
+- github action workflow with image build and tf deploy
+- connects infra and deploy
