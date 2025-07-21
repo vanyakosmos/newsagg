@@ -2,7 +2,10 @@
 
 ![build](https://github.com/vanyakosmos/newsagg/actions/workflows/cicd.yml/badge.svg)
 
-My news aggregator
+Mini news aggregator. It scraps articles from Hacker News and Lobste.rs and push them to 
+[News Aggregator](https://telegram.me/newnewsagg) telegram channel.
+
+Aside from that, it also served as a practice ground for using Terraform and GCP.
 
 ## Project Architecture
 
@@ -20,21 +23,24 @@ graph TD
     app -->|fetch data| lo((Lobsters))
 ```
 
-## Deployemnt
+Arch motivation: its free to run.
+
+## Infra and deployment setup
 
 Manual:
 - GCP project creation
-- github token
+- github token for terraform
 - sentry project and dsn
 - telegram channel and bot setup
 
-Infra via terraform:
+Infra - run terraform localy with all the secrets:
 - artifacts registry
 - storage bucket
 - service accounts and bindings
 - github secrets and vars
+- workload identity for github actions
 
-Deployment via terraform:
+Deployment using terraform via CI/CD:
 - cloud run job
 - cloud schedule job
 

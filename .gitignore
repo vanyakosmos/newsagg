@@ -6,3 +6,4 @@ tmp/*
 terraform.tfstate
 terraform.tfstate.backup
 tf/generated/*
+gha-creds-*.json
