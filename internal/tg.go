@@ -14,11 +14,14 @@ import (
 func SendArticle(ctx context.Context, b *bot.Bot, article newsArticle, targetChannel string) bool {
 	disableLinks := false
 	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:             targetChannel,
-		ParseMode:          models.ParseModeMarkdown,
-		Text:               formatMessage(article),
-		ReplyMarkup:        formatKeyboard(article),
-		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: &disableLinks},
+		ChatID:      targetChannel,
+		ParseMode:   models.ParseModeMarkdown,
+		Text:        formatMessage(article),
+		ReplyMarkup: formatKeyboard(article),
+		LinkPreviewOptions: &models.LinkPreviewOptions{
+			IsDisabled: &disableLinks,
+			URL:        &article.ArticleURL,
+		},
 	})
 	if err != nil {
 		if rateErr, ok := err.(*bot.TooManyRequestsError); ok {
@@ -36,10 +39,11 @@ func SendArticle(ctx context.Context, b *bot.Bot, article newsArticle, targetCha
 func formatMessage(article newsArticle) string {
 	duration := time.Since(article.CreatedAt)
 	messageLines := []string{
-		fmt.Sprintf("*%s* \\(Score %d\\+ in %d hours\\)",
+		fmt.Sprintf("*%s* \\(Score %d\\+ in %s\\)",
 			bot.EscapeMarkdown(article.Title),
 			article.Score,
-			int(duration.Hours())),
+			bot.EscapeMarkdown(timeSincePost(duration)),
+		),
 		"",
 		"*Link*: " + bot.EscapeMarkdown(article.ArticleURL),
 		"*Comments*: " + bot.EscapeMarkdown(article.CommentsURL),
@@ -56,4 +60,23 @@ func formatKeyboard(article newsArticle) *models.InlineKeyboardMarkup {
 	return &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{keyboardRow},
 	}
+}
+
+func timeSincePost(duration time.Duration) string {
+	if duration.Minutes() < 2 {
+		return "1 minute 🔥"
+	}
+	if duration.Minutes() < 60 {
+		return fmt.Sprintf("%d minutes 🔥", int(duration.Minutes()))
+	}
+	if duration.Hours() < 2 {
+		return "1 hour 🔥"
+	}
+	if duration.Hours() < 24 {
+		return fmt.Sprintf("%d hours", int(duration.Hours()))
+	}
+	if duration.Hours() < 48 {
+		return "1 day"
+	}
+	return fmt.Sprintf("%d days", int(duration.Hours()/24))
 }
