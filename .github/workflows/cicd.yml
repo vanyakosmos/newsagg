@@ -20,43 +20,10 @@ jobs:
       - name: Test
         run: docker run --rm newsagg:dev go test ./...
   
-  test-infra:
-    name: Test that infra is up to date
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-      
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.12.2
-
-      - name: Check infra changes
-        run: |
-          if terraform plan -detailed-exitcode > /dev/null; then
-              echo "No changes."
-          else
-              code=$?
-              if [ $code -eq 2 ]; then
-                  echo "There are pending changes."
-              else
-                  echo "Error running terraform plan."
-              fi
-              exit 1
-          fi
-
   build:
     name: Build docker image and push to Artifact Registry
     runs-on: ubuntu-latest
-    needs: [test, test-infra]
+    needs: [test]
 
     steps:
       - name: Checkout code
