@@ -1,5 +1,3 @@
-# ENV VARS
-
 resource "github_actions_variable" "docker_registry" {
   repository    = var.github_repo
   variable_name = "docker_registry"
@@ -13,10 +11,14 @@ resource "github_actions_variable" "image_name" {
   value         = local.image_name
 }
 
-# SECRETS
+resource "github_actions_variable" "gh_actions_sa" {
+  repository    = var.github_repo
+  variable_name = "gh_actions_sa"
+  value         = google_service_account.github.email
+}
 
-resource "github_actions_secret" "gcp_sa_key" {
-  repository      = var.github_repo
-  secret_name     = "gcp_sa_key"
-  plaintext_value = base64decode(google_service_account_key.github.private_key)
+resource "github_actions_variable" "workload_identity_provider" {
+  repository    = var.github_repo
+  variable_name = "workload_identity_provider"
+  value         = google_iam_workload_identity_pool_provider.github_provider.name
 }

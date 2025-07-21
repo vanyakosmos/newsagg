@@ -2,12 +2,6 @@
 
 version: "3"
 
-vars:
-  GCP_PROJECT: newsagg-466216
-  GCP_REGION: europe-central2
-  REGISTRY_HOST: "{{.GCP_REGION}}-docker.pkg.dev"
-  IMAGE_TAG: "{{.REGISTRY_HOST}}/{{.GCP_PROJECT}}/docker/newsagg:latest"
-
 tasks:
   run:
     cmd: docker compose up app

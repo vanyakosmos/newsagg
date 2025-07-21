@@ -21,7 +21,7 @@ resource "google_project_iam_member" "github_service_account_user" {
 }
 resource "google_project_iam_member" "github_run_developer" {
   member  = "serviceAccount:${google_service_account.github.email}"
-  project = "newsagg-466216"
+  project = var.gcp_project
   role    = "roles/run.developer"
 }
 resource "google_project_iam_member" "github_cloudscheduler_admin" {
@@ -29,11 +29,10 @@ resource "google_project_iam_member" "github_cloudscheduler_admin" {
   project = var.gcp_project
   role    = "roles/cloudscheduler.admin"
 }
-resource "google_service_account_key" "github" {
-  service_account_id = google_service_account.github.account_id
-  keepers = {
-    key_version = 1
-  }
+resource "google_service_account_iam_member" "github_impersonation" {
+  service_account_id = google_service_account.github.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.github_owner}/${var.github_repo}"
 }
 
 
