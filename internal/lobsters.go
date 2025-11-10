@@ -68,7 +68,7 @@ func extractArticle(node *html.Node) newsArticle {
 			article.Score = score
 		} else if n.Data == "time" {
 			title, _ := getAttr(n, "title")
-			age, _ := time.Parse("2006-01-02 15:04:05 -0700", title)
+			age, _ := time.Parse("2006-01-02 15:04:05", title)
 			article.CreatedAt = age
 		}
 	}
